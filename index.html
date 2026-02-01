@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="./js/physics.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -22,9 +23,7 @@
 
   <script type="text/babel">
     const { useState, useMemo, useEffect } = React;
-
-    // Calculate stress area from diameter and pitch
-    const calculateAs = (d, P) => 0.7854 * Math.pow(d - 0.9382 * P, 2);
+    const { calculateAs, calculateJointForces, processThreadSpecs, processMaterialSpecs } = BoltPhysics;
 
     // Loading component
     function Loading() {
@@ -59,15 +58,9 @@
     }
 
     function BoltDiagram({ materialsConfig, threadsConfig }) {
-      // Process materials
-      const BOLT_MATERIALS = { ...materialsConfig.materials, Custom: { sigmaB: null, description: 'User defined', color: '#64748b' } };
-
-      // Process threads - calculate As from d and P
-      const BOLT_STANDARDS = {};
-      for (const [name, specs] of Object.entries(threadsConfig.threads)) {
-        BOLT_STANDARDS[name] = { d: specs.d, P: specs.P, As: calculateAs(specs.d, specs.P) };
-      }
-      BOLT_STANDARDS['Custom'] = { d: null, P: null, As: null };
+      // Process materials and threads using physics module
+      const BOLT_MATERIALS = processMaterialSpecs(materialsConfig.materials);
+      const BOLT_STANDARDS = processThreadSpecs(threadsConfig.threads);
 
       const defaultMaterial = Object.keys(materialsConfig.materials)[2] || '12.9';
       const defaultThread = 'M10';
@@ -102,21 +95,14 @@
       const Kc = Kb * stiffnessRatio;
 
       const calc = useMemo(() => {
-        const breakingLoad = (sigmaB * As) / 1000;
-        const W0 = breakingLoad * (preloadPercent / 100);
-        const phi = Kb / (Kb + Kc);
-        const deltaWb = externalForce * phi;
-        const deltaWc = externalForce * (1 - phi);
-        const Wb = W0 + deltaWb;
-        const Wc = W0 - deltaWc;
-        const deltaBolt0 = W0 / Kb;
-        const deltaClamp0 = W0 / Kc;
-        const deltaDelta = externalForce / (Kb + Kc);
-        const looseningDanger = Wc <= 0;
-        const breakageDanger = Wb >= breakingLoad;
-        const looseningForce = W0 / (1 - phi);
-        const breakageForce = (breakingLoad - W0) / phi;
-        return { breakingLoad, W0, phi, deltaWb, deltaWc, Wb, Wc, deltaBolt0, deltaClamp0, deltaDelta, looseningDanger, breakageDanger, looseningForce, breakageForce };
+        return calculateJointForces({
+          sigmaB,
+          As,
+          Kb,
+          Kc,
+          preloadPercent,
+          externalForce
+        });
       }, [sigmaB, As, Kb, Kc, preloadPercent, externalForce]);
 
       const svgWidth = 520;
