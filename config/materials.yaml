@@ -1,0 +1,48 @@
+# ==============================================
+# BOLT MATERIAL SPECIFICATIONS
+# ==============================================
+# sigmaB: Tensile strength [MPa]
+# description: Material description
+# color: Display color (hex)
+# ==============================================
+
+materials:
+  A2-70:
+    sigmaB: 700
+    description: "Stainless Steel (SUS304)"
+    color: "#94a3b8"
+
+  64 Titanium:
+    sigmaB: 900
+    description: "Ti-6Al-4V"
+    color: "#a78bfa"
+
+  "12.9":
+    sigmaB: 1200
+    description: "High Strength Steel"
+    color: "#fbbf24"
+
+  A286:
+    sigmaB: 860
+    description: "Iron-based Superalloy"
+    color: "#f97316"
+
+  SCM435:
+    sigmaB: 930
+    description: "Chromium-Molybdenum Steel"
+    color: "#38bdf8"
+
+  Inconel 718:
+    sigmaB: 1240
+    description: "Nickel-based Superalloy"
+    color: "#4ade80"
+
+  "8.8":
+    sigmaB: 800
+    description: "Medium Strength Steel"
+    color: "#fb923c"
+
+  "10.9":
+    sigmaB: 1000
+    description: "High Strength Steel"
+    color: "#f472b6"

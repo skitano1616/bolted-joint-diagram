@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolt Joint Triangle Diagram</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    input[type="range"] { cursor: pointer; }
+    .loader { border: 3px solid #334155; border-top: 3px solid #22d3ee; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+    // Calculate stress area from diameter and pitch
+    const calculateAs = (d, P) => 0.7854 * Math.pow(d - 0.9382 * P, 2);
+
+    // Loading component
+    function Loading() {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="loader mx-auto mb-4"></div>
+            <p className="text-cyan-400">Loading configuration...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Error component
+    function ErrorDisplay({ error, onRetry }) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+          <div className="bg-red-500/20 border border-red-500 rounded-xl p-6 max-w-md text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold text-red-400 mb-2">Failed to Load Configuration</h2>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <p className="text-slate-400 text-sm mb-4">
+              Make sure you're running a local server:<br/>
+              <code className="bg-slate-800 px-2 py-1 rounded">python3 -m http.server 8000</code>
+            </p>
+            <button onClick={onRetry} className="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded-lg text-white">
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function BoltDiagram({ materialsConfig, threadsConfig }) {
+      // Process materials
+      const BOLT_MATERIALS = { ...materialsConfig.materials, Custom: { sigmaB: null, description: 'User defined', color: '#64748b' } };
+
+      // Process threads - calculate As from d and P
+      const BOLT_STANDARDS = {};
+      for (const [name, specs] of Object.entries(threadsConfig.threads)) {
+        BOLT_STANDARDS[name] = { d: specs.d, P: specs.P, As: calculateAs(specs.d, specs.P) };
+      }
+      BOLT_STANDARDS['Custom'] = { d: null, P: null, As: null };
+
+      const defaultMaterial = Object.keys(materialsConfig.materials)[2] || '12.9';
+      const defaultThread = 'M10';
+
+      const [boltStandard, setBoltStandard] = useState(defaultThread);
+      const [boltMaterial, setBoltMaterial] = useState(defaultMaterial);
+      const [sigmaB, setSigmaB] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaB || 1200);
+      const [d, setD] = useState(BOLT_STANDARDS[defaultThread]?.d || 10);
+      const [P, setP] = useState(BOLT_STANDARDS[defaultThread]?.P || 1.5);
+      const [Kb, setKb] = useState(200);
+      const [stiffnessRatio, setStiffnessRatio] = useState(0.4);
+      const [preloadPercent, setPreloadPercent] = useState(70);
+      const [externalForce, setExternalForce] = useState(0);
+
+      const As = useMemo(() => calculateAs(d, P), [d, P]);
+
+      const handleBoltStandardChange = (e) => {
+        const standard = e.target.value;
+        setBoltStandard(standard);
+        if (BOLT_STANDARDS[standard]?.d !== null) {
+          setD(BOLT_STANDARDS[standard].d);
+          setP(BOLT_STANDARDS[standard].P);
+        }
+      };
+
+      const handleBoltMaterialChange = (e) => {
+        const material = e.target.value;
+        setBoltMaterial(material);
+        if (BOLT_MATERIALS[material]?.sigmaB !== null) setSigmaB(BOLT_MATERIALS[material].sigmaB);
+      };
+
+      const Kc = Kb * stiffnessRatio;
+
+      const calc = useMemo(() => {
+        const breakingLoad = (sigmaB * As) / 1000;
+        const W0 = breakingLoad * (preloadPercent / 100);
+        const phi = Kb / (Kb + Kc);
+        const deltaWb = externalForce * phi;
+        const deltaWc = externalForce * (1 - phi);
+        const Wb = W0 + deltaWb;
+        const Wc = W0 - deltaWc;
+        const deltaBolt0 = W0 / Kb;
+        const deltaClamp0 = W0 / Kc;
+        const deltaDelta = externalForce / (Kb + Kc);
+        const looseningDanger = Wc <= 0;
+        const breakageDanger = Wb >= breakingLoad;
+        const looseningForce = W0 / (1 - phi);
+        const breakageForce = (breakingLoad - W0) / phi;
+        return { breakingLoad, W0, phi, deltaWb, deltaWc, Wb, Wc, deltaBolt0, deltaClamp0, deltaDelta, looseningDanger, breakageDanger, looseningForce, breakageForce };
+      }, [sigmaB, As, Kb, Kc, preloadPercent, externalForce]);
+
+      const svgWidth = 520;
+      const svgHeight = 400;
+      const margin = { top: 40, right: 50, bottom: 50, left: 50 };
+      const graphWidth = svgWidth - margin.left - margin.right;
+      const graphHeight = svgHeight - margin.top - margin.bottom;
+
+      const maxW = Math.max(calc.breakingLoad * 1.15, calc.Wb * 1.1);
+      const maxDelta = Math.max(calc.deltaBolt0, calc.deltaClamp0) * 1.5;
+      const scaleX = graphWidth / (maxDelta * 2);
+      const scaleY = graphHeight / maxW;
+      const centerX = margin.left + graphWidth / 2;
+      const zeroY = margin.top + graphHeight;
+
+      const toSvgX = (delta) => centerX + delta * scaleX;
+      const toSvgY = (w) => zeroY - w * scaleY;
+
+      const apexX = toSvgX(0);
+      const apexY = toSvgY(calc.W0);
+      const boltZeroX = toSvgX(-calc.deltaBolt0);
+      const clampZeroX = toSvgX(calc.deltaClamp0);
+      const newX = toSvgX(calc.deltaDelta);
+      const WbY = toSvgY(calc.Wb);
+      const WcY = toSvgY(Math.max(0, calc.Wc));
+
+      const materialColor = BOLT_MATERIALS[boltMaterial]?.color || '#64748b';
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-2xl font-bold text-center mb-3 text-cyan-400">Bolted Joint Diagram</h1>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* Left: Input Panel */}
+              <div className="lg:col-span-3 space-y-3">
+                {/* Bolt Specs */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h2 className="text-sm font-semibold mb-3 text-cyan-300 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>Bolt
+                  </h2>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Thread</label>
+                      <select value={boltStandard} onChange={handleBoltStandardChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white">
+                        {Object.keys(BOLT_STANDARDS).map(std => <option key={std} value={std}>{std}</option>)}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">d [mm]</label>
+                        <input type="number" value={d} onChange={(e) => setD(Number(e.target.value))} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">P [mm]</label>
+                        <input type="number" value={P} onChange={(e) => setP(Number(e.target.value))} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">As [mm²] <span className="text-cyan-400">(calculated)</span></label>
+                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1.5 text-sm text-cyan-300 font-mono">
+                        {As.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Kb [kN/mm]</label>
+                      <input type="number" value={Kb} onChange={(e) => setKb(Number(e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Material */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700" style={{borderColor: materialColor + '40'}}>
+                  <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{color: materialColor}}>
+                    <span className="w-2 h-2 rounded-full" style={{backgroundColor: materialColor}}></span>Material
+                  </h2>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Grade</label>
+                      <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white">
+                        {Object.keys(BOLT_MATERIALS).map(mat => <option key={mat} value={mat}>{mat}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">σb [MPa]</label>
+                      <input type="number" value={sigmaB} onChange={(e) => setSigmaB(Number(e.target.value))} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stiffness Ratio */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-purple-700/50">
+                  <h2 className="text-sm font-semibold mb-3 text-purple-300 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-purple-400 rounded-full"></span>Stiffness Ratio
+                  </h2>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">c = Kc/Kb</label>
+                      <input type="number" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <input type="range" min="0.1" max="10" step="0.1" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} className="w-full mt-1 accent-purple-400"/>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Load */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h2 className="text-sm font-semibold mb-3 text-orange-300 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-400 rounded-full"></span>Load
+                  </h2>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%]</label>
+                      <input type="range" min="10" max="100" value={preloadPercent} onChange={(e) => setPreloadPercent(Number(e.target.value))} className="w-full accent-orange-400"/>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">External Force F [kN]</label>
+                      <input type="number" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <input type="range" min="0" max={Math.max(calc.looseningForce * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-1 accent-orange-400"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Center: Graph */}
+              <div className="lg:col-span-6">
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
+                    <defs>
+                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" strokeWidth="0.5"/>
+                      </pattern>
+                    </defs>
+
+                    <rect x={margin.left} y={margin.top} width={graphWidth} height={graphHeight} fill="url(#grid)"/>
+                    <line x1={margin.left} y1={zeroY} x2={svgWidth - margin.right} y2={zeroY} stroke="#64748b" strokeWidth="1.5"/>
+                    <line x1={centerX} y1={margin.top - 10} x2={centerX} y2={zeroY} stroke="#64748b" strokeWidth="1.5"/>
+
+                    <text x={svgWidth - margin.right + 5} y={zeroY + 15} fill="#94a3b8" fontSize="12">δ</text>
+                    <text x={centerX + 8} y={margin.top - 12} fill="#94a3b8" fontSize="12">W</text>
+                    <text x={margin.left + 15} y={zeroY + 15} fill="#22d3ee" fontSize="11">← Bolt</text>
+                    <text x={svgWidth - margin.right - 55} y={zeroY + 15} fill="#a855f7" fontSize="11">Clamped →</text>
+
+                    <line x1={margin.left} y1={toSvgY(calc.breakingLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.breakingLoad)} stroke={materialColor} strokeWidth="2" strokeDasharray="6,3"/>
+                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 5} fill={materialColor} fontSize="11" textAnchor="end">{boltMaterial}: {calc.breakingLoad.toFixed(1)}kN</text>
+
+                    <line x1={apexX} y1={apexY} x2={boltZeroX} y2={zeroY} stroke="#22d3ee" strokeWidth="3"/>
+                    <line x1={apexX} y1={apexY} x2={toSvgX(calc.deltaBolt0 * 0.5)} y2={toSvgY(calc.W0 + Kb * calc.deltaBolt0 * 0.5)} stroke="#22d3ee" strokeWidth="2" strokeDasharray="5,3" opacity="0.6"/>
+                    <line x1={apexX} y1={apexY} x2={clampZeroX} y2={zeroY} stroke="#a855f7" strokeWidth="3"/>
+
+                    <circle cx={apexX} cy={apexY} r="6" fill="#10b981" stroke="#fff" strokeWidth="2"/>
+                    <text x={apexX - 10} y={apexY - 10} fill="#10b981" fontSize="12" fontWeight="bold" textAnchor="middle">W₀={calc.W0.toFixed(1)}</text>
+
+                    {externalForce > 0 && (
+                      <>
+                        <line x1={newX} y1={WbY} x2={newX} y2={WcY} stroke="#22c55e" strokeWidth="4"/>
+                        <text x={newX + 12} y={(WbY + WcY) / 2 + 4} fill="#22c55e" fontSize="13" fontWeight="bold">F={externalForce.toFixed(1)}</text>
+                        <line x1={apexX} y1={apexY} x2={newX} y2={apexY} stroke="#f97316" strokeWidth="1.5" strokeDasharray="4,3"/>
+                        <circle cx={newX} cy={WbY} r="5" fill="#22d3ee" stroke="#fff" strokeWidth="1.5"/>
+                        <text x={newX - 8} y={WbY - 10} fill="#22d3ee" fontSize="11" fontWeight="bold" textAnchor="middle">Wb={calc.Wb.toFixed(1)}</text>
+                        <circle cx={newX} cy={WcY} r="5" fill="#a855f7" stroke="#fff" strokeWidth="1.5"/>
+                        <text x={newX - 8} y={WcY + 15} fill="#a855f7" fontSize="11" fontWeight="bold" textAnchor="middle">Wc={calc.Wc.toFixed(1)}</text>
+                        <line x1={apexX} y1={apexY} x2={newX} y2={WbY} stroke="#22d3ee" strokeWidth="1" strokeDasharray="3,2" opacity="0.5"/>
+                        <line x1={apexX} y1={apexY} x2={newX} y2={WcY} stroke="#a855f7" strokeWidth="1" strokeDasharray="3,2" opacity="0.5"/>
+                      </>
+                    )}
+
+                    <g transform={`translate(${margin.left + 5}, ${margin.top + 5})`}>
+                      <rect x="0" y="0" width="120" height="68" fill="#1e293b" rx="4" opacity="0.95"/>
+                      <line x1="8" y1="14" x2="28" y2="14" stroke="#22d3ee" strokeWidth="2"/>
+                      <text x="34" y="17" fill="#22d3ee" fontSize="10">Bolt Kb={Kb}</text>
+                      <line x1="8" y1="30" x2="28" y2="30" stroke="#a855f7" strokeWidth="2"/>
+                      <text x="34" y="33" fill="#a855f7" fontSize="10">Clamp Kc={Kc.toFixed(0)}</text>
+                      <line x1="8" y1="46" x2="28" y2="46" stroke="#22c55e" strokeWidth="2"/>
+                      <text x="34" y="49" fill="#22c55e" fontSize="10">Force F</text>
+                      <circle cx="18" cy="60" r="4" fill="#10b981"/>
+                      <text x="34" y="63" fill="#10b981" fontSize="10">Preload W₀</text>
+                    </g>
+                  </svg>
+                </div>
+
+                {/* Warnings */}
+                {(calc.looseningDanger || calc.breakageDanger) && (
+                  <div className="mt-3 space-y-2">
+                    {calc.looseningDanger && (
+                      <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 flex items-center gap-2">
+                        <span className="text-xl">⚠️</span>
+                        <span className="text-yellow-400 font-bold">Joint Separation Risk</span>
+                      </div>
+                    )}
+                    {calc.breakageDanger && (
+                      <div className="bg-red-500/20 border border-red-500 rounded-lg p-3 flex items-center gap-2">
+                        <span className="text-xl">🔴</span>
+                        <span className="text-red-400 font-bold">Bolt Fracture Risk</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: Output Panel */}
+              <div className="lg:col-span-3 space-y-3">
+                {/* Stiffness Results */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-purple-700/50">
+                  <h2 className="text-sm font-semibold mb-3 text-purple-300">Stiffness</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Ratio c</span>
+                      <span className="text-lg font-bold text-purple-400">{stiffnessRatio.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Kc [kN/mm]</span>
+                      <span className="text-lg font-bold text-purple-400">{Kc.toFixed(1)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Load Factor φ</span>
+                      <span className="text-lg font-bold text-green-400">{calc.phi.toFixed(4)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Force Results */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-cyan-700/50">
+                  <h2 className="text-sm font-semibold mb-3 text-cyan-300">Forces</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Preload W₀</span>
+                      <span className="text-lg font-bold text-green-400">{calc.W0.toFixed(1)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Bolt Wb</span>
+                      <span className={`text-lg font-bold ${calc.breakageDanger ? 'text-red-400' : 'text-cyan-400'}`}>{calc.Wb.toFixed(2)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Clamp Wc</span>
+                      <span className={`text-lg font-bold ${calc.Wc <= 0 ? 'text-yellow-400' : 'text-purple-400'}`}>{calc.Wc.toFixed(2)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Breaking</span>
+                      <span className="text-lg font-bold" style={{color: materialColor}}>{calc.breakingLoad.toFixed(1)} kN</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delta Results */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-700/50">
+                  <h2 className="text-sm font-semibold mb-3 text-orange-300">Changes</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">ΔWb</span>
+                      <span className="text-lg font-bold text-cyan-400">{calc.deltaWb.toFixed(2)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">ΔWc</span>
+                      <span className="text-lg font-bold text-purple-400">{calc.deltaWc.toFixed(2)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Δδ</span>
+                      <span className="text-lg font-bold text-orange-400">{calc.deltaDelta.toFixed(4)} mm</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Critical Forces */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Critical Forces</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">⚠️ Separation</span>
+                      <span className="text-lg font-bold text-yellow-400">{calc.looseningForce.toFixed(1)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">🔴 Fracture</span>
+                      <span className="text-lg font-bold text-red-400">{calc.breakageForce.toFixed(1)} kN</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 text-center text-slate-600 text-xs">
+              As = 0.7854×(d-0.9382P)² | c = Kc/Kb | φ = 1/(1+c) | ΔWb = F×φ | ΔWc = F×(1-φ)
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Main App with data loading
+    function App() {
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [materialsConfig, setMaterialsConfig] = useState(null);
+      const [threadsConfig, setThreadsConfig] = useState(null);
+
+      const loadConfig = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const [materialsRes, threadsRes] = await Promise.all([
+            fetch('./config/materials.yaml'),
+            fetch('./config/threads.yaml')
+          ]);
+
+          if (!materialsRes.ok) throw new Error('Failed to load materials.yaml');
+          if (!threadsRes.ok) throw new Error('Failed to load threads.yaml');
+
+          const materialsText = await materialsRes.text();
+          const threadsText = await threadsRes.text();
+
+          setMaterialsConfig(jsyaml.load(materialsText));
+          setThreadsConfig(jsyaml.load(threadsText));
+          setLoading(false);
+        } catch (err) {
+          setError(err.message);
+          setLoading(false);
+        }
+      };
+
+      useEffect(() => {
+        loadConfig();
+      }, []);
+
+      if (loading) return <Loading />;
+      if (error) return <ErrorDisplay error={error} onRetry={loadConfig} />;
+
+      return <BoltDiagram materialsConfig={materialsConfig} threadsConfig={threadsConfig} />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
