@@ -105,12 +105,13 @@ const BoltPhysics = (function() {
     const processed = {};
     for (const [name, specs] of Object.entries(threads)) {
       processed[name] = {
+        D: specs.D,
         d: specs.d,
         P: specs.P,
         As: calculateAs(specs.d, specs.P)
       };
     }
-    processed['Custom'] = { d: null, P: null, As: null };
+    processed['Custom'] = { D: null, d: null, P: null, As: null };
     return processed;
   }
 
