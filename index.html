@@ -70,12 +70,15 @@
       const [sigmaB, setSigmaB] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaB || 1200);
       const [d, setD] = useState(BOLT_STANDARDS[defaultThread]?.d || 10);
       const [P, setP] = useState(BOLT_STANDARDS[defaultThread]?.P || 1.5);
-      const [Kb, setKb] = useState(200);
+      const [L, setL] = useState(BOLT_STANDARDS[defaultThread]?.D || 10);
+      const [boltCount, setBoltCount] = useState(1);
       const [stiffnessRatio, setStiffnessRatio] = useState(0.4);
       const [preloadPercent, setPreloadPercent] = useState(70);
       const [externalForce, setExternalForce] = useState(0);
 
       const As = useMemo(() => calculateAs(d, P), [d, P]);
+      const E = 210; // Young's modulus for steel [GPa] = [kN/mm²]
+      const Kb = useMemo(() => L > 0 ? (E * As) / L : 200, [As, L]);
 
       const handleBoltStandardChange = (e) => {
         const standard = e.target.value;
@@ -83,6 +86,7 @@
         if (BOLT_STANDARDS[standard]?.d !== null) {
           setD(BOLT_STANDARDS[standard].d);
           setP(BOLT_STANDARDS[standard].P);
+          setL(BOLT_STANDARDS[standard].D);
         }
       };
 
@@ -93,6 +97,7 @@
       };
 
       const Kc = Kb * stiffnessRatio;
+      const forcePerBolt = boltCount > 0 ? externalForce / boltCount : 0;
 
       const calc = useMemo(() => {
         return calculateJointForces({
@@ -101,9 +106,9 @@
           Kb,
           Kc,
           preloadPercent,
-          externalForce
+          externalForce: forcePerBolt
         });
-      }, [sigmaB, As, Kb, Kc, preloadPercent, externalForce]);
+      }, [sigmaB, As, Kb, Kc, preloadPercent, forcePerBolt]);
 
       const svgWidth = 780;
       const svgHeight = 600;
@@ -134,7 +139,7 @@
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-center mb-3 text-cyan-400">Bolted Joint Diagram</h1>
+            <h1 className="text-2xl font-bold mb-3 text-cyan-400">Bolted Joint Diagram</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left: Input Panel */}
@@ -168,18 +173,19 @@
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Kb [kN/mm]</label>
-                      <input type="number" value={Kb} onChange={(e) => setKb(Number(e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <label className="block text-xs text-slate-400 mb-1">L [mm] (effective length)</label>
+                      <input type="number" value={L} onChange={(e) => setL(Number(e.target.value))} step="1" min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
                     </div>
-                  </div>
-                </div>
-
-                {/* Material */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700" style={{borderColor: materialColor + '40'}}>
-                  <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{color: materialColor}}>
-                    <span className="w-2 h-2 rounded-full" style={{backgroundColor: materialColor}}></span>Material
-                  </h2>
-                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Kb [kN/mm] <span className="text-cyan-400">(E·As/L)</span></label>
+                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1.5 text-sm text-cyan-300 font-mono">
+                        {Kb.toFixed(1)}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Number of Bolts</label>
+                      <input type="number" value={boltCount} onChange={(e) => setBoltCount(Math.max(1, Number(e.target.value)))} min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                    </div>
                     <div>
                       <label className="block text-xs text-slate-400 mb-1">Grade</label>
                       <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white">
@@ -189,6 +195,10 @@
                     <div>
                       <label className="block text-xs text-slate-400 mb-1">σb [MPa]</label>
                       <input type="number" value={sigmaB} onChange={(e) => setSigmaB(Number(e.target.value))} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%]</label>
+                      <input type="range" min="10" max="100" value={preloadPercent} onChange={(e) => setPreloadPercent(Number(e.target.value))} className="w-full accent-cyan-400"/>
                     </div>
                   </div>
                 </div>
@@ -207,20 +217,16 @@
                   </div>
                 </div>
 
-                {/* Load */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                {/* External Load */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-700/50">
                   <h2 className="text-sm font-semibold mb-3 text-orange-300 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-orange-400 rounded-full"></span>Load
+                    <span className="w-2 h-2 bg-orange-400 rounded-full"></span>External Load
                   </h2>
                   <div className="space-y-2">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%]</label>
-                      <input type="range" min="10" max="100" value={preloadPercent} onChange={(e) => setPreloadPercent(Number(e.target.value))} className="w-full accent-orange-400"/>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">External Force F [kN]</label>
+                      <label className="block text-xs text-slate-400 mb-1">Total Force F [kN]</label>
                       <input type="number" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
-                      <input type="range" min="0" max={Math.max(calc.looseningForce * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-1 accent-orange-400"/>
+                      <input type="range" min="0" max={Math.max(calc.looseningForce * boltCount * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-1 accent-orange-400"/>
                     </div>
                   </div>
                 </div>
@@ -246,7 +252,7 @@
                     <text x={svgWidth - margin.right - 55} y={zeroY + 15} fill="#a855f7" fontSize="11">Clamped →</text>
 
                     <line x1={margin.left} y1={toSvgY(calc.breakingLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.breakingLoad)} stroke={materialColor} strokeWidth="2" strokeDasharray="6,3"/>
-                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 5} fill={materialColor} fontSize="11" textAnchor="end">{boltMaterial}: {calc.breakingLoad.toFixed(1)}kN</text>
+                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 8} fill={materialColor} fontSize="22" fontWeight="bold" textAnchor="end">{boltMaterial}: {calc.breakingLoad.toFixed(1)}kN</text>
 
                     <line x1={apexX} y1={apexY} x2={boltZeroX} y2={zeroY} stroke="#22d3ee" strokeWidth="3"/>
                     <line x1={apexX} y1={apexY} x2={toSvgX(calc.deltaBolt0 * 0.5)} y2={toSvgY(calc.W0 + Kb * calc.deltaBolt0 * 0.5)} stroke="#22d3ee" strokeWidth="2" strokeDasharray="5,3" opacity="0.6"/>
@@ -255,10 +261,10 @@
                     <circle cx={apexX} cy={apexY} r="6" fill="#10b981" stroke="#fff" strokeWidth="2"/>
                     <text x={apexX - 10} y={apexY - 10} fill="#10b981" fontSize="12" fontWeight="bold" textAnchor="middle">W₀={calc.W0.toFixed(1)}</text>
 
-                    {externalForce > 0 && (
+                    {forcePerBolt > 0 && (
                       <>
                         <line x1={newX} y1={WbY} x2={newX} y2={WcY} stroke="#22c55e" strokeWidth="4"/>
-                        <text x={newX + 12} y={(WbY + WcY) / 2 + 4} fill="#22c55e" fontSize="13" fontWeight="bold">F={externalForce.toFixed(1)}</text>
+                        <text x={newX + 12} y={(WbY + WcY) / 2 + 4} fill="#22c55e" fontSize="13" fontWeight="bold">F={forcePerBolt.toFixed(1)}</text>
                         <line x1={apexX} y1={apexY} x2={newX} y2={apexY} stroke="#f97316" strokeWidth="1.5" strokeDasharray="4,3"/>
                         <circle cx={newX} cy={WbY} r="5" fill="#22d3ee" stroke="#fff" strokeWidth="1.5"/>
                         <text x={newX - 8} y={WbY - 10} fill="#22d3ee" fontSize="11" fontWeight="bold" textAnchor="middle">Wb={calc.Wb.toFixed(1)}</text>
@@ -270,15 +276,16 @@
                     )}
 
                     <g transform={`translate(${margin.left + 5}, ${margin.top + 5})`}>
-                      <rect x="0" y="0" width="120" height="68" fill="#1e293b" rx="4" opacity="0.95"/>
+                      <rect x="0" y="0" width="140" height="84" fill="#1e293b" rx="4" opacity="0.95"/>
                       <line x1="8" y1="14" x2="28" y2="14" stroke="#22d3ee" strokeWidth="2"/>
                       <text x="34" y="17" fill="#22d3ee" fontSize="10">Bolt Kb={Kb}</text>
                       <line x1="8" y1="30" x2="28" y2="30" stroke="#a855f7" strokeWidth="2"/>
                       <text x="34" y="33" fill="#a855f7" fontSize="10">Clamp Kc={Kc.toFixed(0)}</text>
                       <line x1="8" y1="46" x2="28" y2="46" stroke="#22c55e" strokeWidth="2"/>
-                      <text x="34" y="49" fill="#22c55e" fontSize="10">Force F</text>
+                      <text x="34" y="49" fill="#22c55e" fontSize="10">Force F/bolt</text>
                       <circle cx="18" cy="60" r="4" fill="#10b981"/>
                       <text x="34" y="63" fill="#10b981" fontSize="10">Preload W₀</text>
+                      <text x="8" y="78" fill="#94a3b8" fontSize="10">Bolts: {boltCount} | F={externalForce}kN</text>
                     </g>
                   </svg>
                 </div>
@@ -325,7 +332,7 @@
 
                 {/* Force Results */}
                 <div className="bg-slate-800/50 rounded-xl p-4 border border-cyan-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-cyan-300">Forces</h2>
+                  <h2 className="text-sm font-semibold mb-3 text-cyan-300">Forces / bolt</h2>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Preload W₀</span>
@@ -348,7 +355,7 @@
 
                 {/* Delta Results */}
                 <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-orange-300">Changes</h2>
+                  <h2 className="text-sm font-semibold mb-3 text-orange-300">Changes / bolt</h2>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">ΔWb</span>
@@ -367,7 +374,7 @@
 
                 {/* Critical Forces */}
                 <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Critical Forces</h2>
+                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Critical Forces / bolt</h2>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">⚠️ Separation</span>
