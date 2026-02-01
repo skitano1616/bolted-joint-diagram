@@ -20,15 +20,17 @@ const BoltPhysics = (function() {
   /**
    * Calculate all bolt joint forces and deformations
    * @param {Object} params - Input parameters
+   * @param {number} params.sigmaY - Bolt yield strength [MPa]
    * @param {number} params.sigmaB - Bolt tensile strength [MPa]
    * @param {number} params.As - Stress area [mm²]
    * @param {number} params.Kb - Bolt stiffness [kN/mm]
    * @param {number} params.Kc - Clamped parts stiffness [kN/mm]
-   * @param {number} params.preloadPercent - Preload as percentage of breaking load [%]
+   * @param {number} params.preloadPercent - Preload as percentage of yield load [%]
    * @param {number} params.externalForce - External axial force [kN]
    * @returns {Object} Calculated forces and deformations
    */
   function calculateJointForces({
+    sigmaY,
     sigmaB,
     As,
     Kb,
@@ -36,11 +38,14 @@ const BoltPhysics = (function() {
     preloadPercent,
     externalForce
   }) {
+    // Yield load: σY × As (converted from N to kN)
+    const yieldLoad = (sigmaY * As) / 1000;
+
     // Breaking load: σB × As (converted from N to kN)
     const breakingLoad = (sigmaB * As) / 1000;
 
-    // Initial preload force
-    const W0 = breakingLoad * (preloadPercent / 100);
+    // Initial preload force (based on yield load)
+    const W0 = yieldLoad * (preloadPercent / 100);
 
     // Force ratio (load factor): φ = Kb / (Kb + Kc)
     // This determines how external force is distributed between bolt and clamped parts
@@ -69,16 +74,21 @@ const BoltPhysics = (function() {
 
     // Safety checks
     const looseningDanger = Wc <= 0;  // Joint separation occurs
+    const yieldDanger = Wb >= yieldLoad;  // Bolt yield risk
     const breakageDanger = Wb >= breakingLoad;  // Bolt fracture risk
 
     // Critical forces
     // Force required to cause joint separation (Wc = 0)
     const looseningForce = W0 / (1 - phi);
 
+    // Force required to cause bolt yield (Wb = yieldLoad)
+    const yieldForce = (yieldLoad - W0) / phi;
+
     // Force required to cause bolt fracture (Wb = breakingLoad)
     const breakageForce = (breakingLoad - W0) / phi;
 
     return {
+      yieldLoad,
       breakingLoad,
       W0,
       phi,
@@ -90,8 +100,10 @@ const BoltPhysics = (function() {
       deltaClamp0,
       deltaDelta,
       looseningDanger,
+      yieldDanger,
       breakageDanger,
       looseningForce,
+      yieldForce,
       breakageForce
     };
   }
@@ -123,7 +135,7 @@ const BoltPhysics = (function() {
   function processMaterialSpecs(materials) {
     return {
       ...materials,
-      Custom: { sigmaB: null, description: 'User defined', color: '#64748b' }
+      Custom: { sigmaY: null, sigmaB: null, description: 'User defined', color: '#64748b' }
     };
   }
 

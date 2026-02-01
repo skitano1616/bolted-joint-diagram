@@ -1,48 +1,63 @@
 # ==============================================
 # BOLT MATERIAL SPECIFICATIONS
 # ==============================================
-# sigmaB: Tensile strength [MPa]
+# sigmaY: Yield strength [MPa] (降伏応力)
+# sigmaB: Tensile strength [MPa] (引張強さ)
 # description: Material description
 # color: Display color (hex)
 # ==============================================
 
 materials:
-  A2-70:
-    sigmaB: 700
-    description: "Stainless Steel (SUS304)"
-    color: "#94a3b8"
-
-  64 Titanium:
-    sigmaB: 900
-    description: "Ti-6Al-4V"
-    color: "#a78bfa"
-
-  "12.9":
-    sigmaB: 1200
-    description: "High Strength Steel"
-    color: "#fbbf24"
-
-  A286:
-    sigmaB: 860
-    description: "Iron-based Superalloy"
-    color: "#f97316"
-
-  SCM435:
-    sigmaB: 930
-    description: "Chromium-Molybdenum Steel"
-    color: "#38bdf8"
-
-  Inconel 718:
-    sigmaB: 1240
-    description: "Nickel-based Superalloy"
-    color: "#4ade80"
-
   "8.8":
+    sigmaY: 640
     sigmaB: 800
     description: "Medium Strength Steel"
     color: "#fb923c"
 
   "10.9":
+    sigmaY: 900
     sigmaB: 1000
     description: "High Strength Steel"
     color: "#f472b6"
+
+  "12.9":
+    sigmaY: 1080
+    sigmaB: 1200
+    description: "High Strength Steel"
+    color: "#fbbf24"
+
+  A2-70:
+    sigmaY: 450
+    sigmaB: 700
+    description: "Stainless Steel (SUS304)"
+    color: "#94a3b8"
+
+  A2-80:
+    sigmaY: 600
+    sigmaB: 800
+    description: "Stainless Steel (SUS304 Cold Worked)"
+    color: "#a1a1aa"
+
+  64 Titanium:
+    sigmaY: 880
+    sigmaB: 950
+    description: "Ti-6Al-4V"
+    color: "#a78bfa"
+
+  SCM435:
+    sigmaY: 785
+    sigmaB: 930
+    description: "Chromium-Molybdenum Steel (Quenched & Tempered)"
+    color: "#38bdf8"
+
+  A286:
+    sigmaY: 690
+    sigmaB: 1000
+    description: "Iron-based Superalloy (Solution Treated & Aged)"
+    color: "#f97316"
+
+  Inconel 718:
+    sigmaY: 1035
+    sigmaB: 1275
+    description: "Nickel-based Superalloy (Aged)"
+    color: "#4ade80"

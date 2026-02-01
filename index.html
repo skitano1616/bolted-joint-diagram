@@ -67,6 +67,7 @@
 
       const [boltStandard, setBoltStandard] = useState(defaultThread);
       const [boltMaterial, setBoltMaterial] = useState(defaultMaterial);
+      const [sigmaY, setSigmaY] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaY || 1080);
       const [sigmaB, setSigmaB] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaB || 1200);
       const [d, setD] = useState(BOLT_STANDARDS[defaultThread]?.d || 10);
       const [P, setP] = useState(BOLT_STANDARDS[defaultThread]?.P || 1.5);
@@ -93,6 +94,7 @@
       const handleBoltMaterialChange = (e) => {
         const material = e.target.value;
         setBoltMaterial(material);
+        if (BOLT_MATERIALS[material]?.sigmaY !== null) setSigmaY(BOLT_MATERIALS[material].sigmaY);
         if (BOLT_MATERIALS[material]?.sigmaB !== null) setSigmaB(BOLT_MATERIALS[material].sigmaB);
       };
 
@@ -101,6 +103,7 @@
 
       const calc = useMemo(() => {
         return calculateJointForces({
+          sigmaY,
           sigmaB,
           As,
           Kb,
@@ -108,7 +111,7 @@
           preloadPercent,
           externalForce: forcePerBolt
         });
-      }, [sigmaB, As, Kb, Kc, preloadPercent, forcePerBolt]);
+      }, [sigmaY, sigmaB, As, Kb, Kc, preloadPercent, forcePerBolt]);
 
       const svgWidth = 780;
       const svgHeight = 600;
@@ -192,12 +195,18 @@
                         {Object.keys(BOLT_MATERIALS).map(mat => <option key={mat} value={mat}>{mat}</option>)}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1">σb [MPa]</label>
-                      <input type="number" value={sigmaB} onChange={(e) => setSigmaB(Number(e.target.value))} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">σy [MPa]</label>
+                        <input type="number" value={sigmaY} onChange={(e) => setSigmaY(Number(e.target.value))} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">σb [MPa]</label>
+                        <input type="number" value={sigmaB} onChange={(e) => setSigmaB(Number(e.target.value))} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%]</label>
+                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%] of σy</label>
                       <input type="range" min="10" max="100" value={preloadPercent} onChange={(e) => setPreloadPercent(Number(e.target.value))} className="w-full accent-cyan-400"/>
                     </div>
                   </div>
@@ -251,8 +260,13 @@
                     <text x={margin.left + 15} y={zeroY + 15} fill="#22d3ee" fontSize="11">← Bolt</text>
                     <text x={svgWidth - margin.right - 55} y={zeroY + 15} fill="#a855f7" fontSize="11">Clamped →</text>
 
-                    <line x1={margin.left} y1={toSvgY(calc.breakingLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.breakingLoad)} stroke={materialColor} strokeWidth="2" strokeDasharray="6,3"/>
-                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 8} fill={materialColor} fontSize="22" fontWeight="bold" textAnchor="end">{boltMaterial}: {calc.breakingLoad.toFixed(1)}kN</text>
+                    {/* Yield line */}
+                    <line x1={margin.left} y1={toSvgY(calc.yieldLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.yieldLoad)} stroke="#facc15" strokeWidth="2" strokeDasharray="4,2"/>
+                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.yieldLoad) - 8} fill="#facc15" fontSize="16" fontWeight="bold" textAnchor="end">Yield: {calc.yieldLoad.toFixed(1)}kN</text>
+
+                    {/* Breaking line */}
+                    <line x1={margin.left} y1={toSvgY(calc.breakingLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.breakingLoad)} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3"/>
+                    <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 8} fill="#ef4444" fontSize="16" fontWeight="bold" textAnchor="end">Fracture: {calc.breakingLoad.toFixed(1)}kN</text>
 
                     <line x1={apexX} y1={apexY} x2={boltZeroX} y2={zeroY} stroke="#22d3ee" strokeWidth="3"/>
                     <line x1={apexX} y1={apexY} x2={toSvgX(calc.deltaBolt0 * 0.5)} y2={toSvgY(calc.W0 + Kb * calc.deltaBolt0 * 0.5)} stroke="#22d3ee" strokeWidth="2" strokeDasharray="5,3" opacity="0.6"/>
@@ -291,12 +305,18 @@
                 </div>
 
                 {/* Warnings */}
-                {(calc.looseningDanger || calc.breakageDanger) && (
+                {(calc.looseningDanger || calc.yieldDanger || calc.breakageDanger) && (
                   <div className="mt-3 space-y-2">
                     {calc.looseningDanger && (
                       <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 flex items-center gap-2">
                         <span className="text-xl">⚠️</span>
                         <span className="text-yellow-400 font-bold">Joint Separation Risk</span>
+                      </div>
+                    )}
+                    {calc.yieldDanger && !calc.breakageDanger && (
+                      <div className="bg-yellow-500/20 border border-yellow-500 rounded-lg p-3 flex items-center gap-2">
+                        <span className="text-xl">🟡</span>
+                        <span className="text-yellow-400 font-bold">Bolt Yield Risk</span>
                       </div>
                     )}
                     {calc.breakageDanger && (
@@ -340,11 +360,15 @@
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Bolt Wb</span>
-                      <span className={`text-lg font-bold ${calc.breakageDanger ? 'text-red-400' : 'text-cyan-400'}`}>{calc.Wb.toFixed(2)} kN</span>
+                      <span className={`text-lg font-bold ${calc.yieldDanger ? 'text-yellow-400' : calc.breakageDanger ? 'text-red-400' : 'text-cyan-400'}`}>{calc.Wb.toFixed(2)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Clamp Wc</span>
                       <span className={`text-lg font-bold ${calc.Wc <= 0 ? 'text-yellow-400' : 'text-purple-400'}`}>{calc.Wc.toFixed(2)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Yield</span>
+                      <span className="text-lg font-bold text-yellow-400">{calc.yieldLoad.toFixed(1)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Breaking</span>
@@ -378,7 +402,11 @@
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">⚠️ Separation</span>
-                      <span className="text-lg font-bold text-yellow-400">{calc.looseningForce.toFixed(1)} kN</span>
+                      <span className="text-lg font-bold text-orange-400">{calc.looseningForce.toFixed(1)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">🟡 Yield</span>
+                      <span className="text-lg font-bold text-yellow-400">{calc.yieldForce.toFixed(1)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">🔴 Fracture</span>
