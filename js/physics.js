@@ -120,7 +120,7 @@ const BoltPhysics = (function() {
         D: specs.D,
         d: specs.d,
         P: specs.P,
-        As: calculateAs(specs.d, specs.P)
+        As: calculateAs(specs.D, specs.P)
       };
     }
     processed['Custom'] = { D: null, d: null, P: null, As: null };
