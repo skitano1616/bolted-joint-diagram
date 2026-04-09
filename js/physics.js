@@ -87,6 +87,10 @@ const BoltPhysics = (function() {
     // Force required to cause bolt fracture (Wb = breakingLoad)
     const breakageForce = (breakingLoad - W0) / phi;
 
+    // Factor of Safety (based on actual bolt force Wb)
+    const fosYield = yieldLoad / Wb;
+    const fosFracture = breakingLoad / Wb;
+
     return {
       yieldLoad,
       breakingLoad,
@@ -104,7 +108,9 @@ const BoltPhysics = (function() {
       breakageDanger,
       looseningForce,
       yieldForce,
-      breakageForce
+      breakageForce,
+      fosYield,
+      fosFracture
     };
   }
 

@@ -435,6 +435,25 @@
                     </div>
                   </div>
                 </div>
+
+                {/* Factor of Safety */}
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Factor of Safety</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">FoS (Yield)</span>
+                      <span className={`text-lg font-bold ${calc.fosYield >= 2 ? 'text-green-400' : calc.fosYield >= 1.5 ? 'text-yellow-400' : calc.fosYield >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
+                        {calc.fosYield.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">FoS (Fracture)</span>
+                      <span className={`text-lg font-bold ${calc.fosFracture >= 2 ? 'text-green-400' : calc.fosFracture >= 1.5 ? 'text-yellow-400' : calc.fosFracture >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
+                        {calc.fosFracture.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
