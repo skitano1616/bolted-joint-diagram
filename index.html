@@ -167,95 +167,95 @@
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left: Input Panel */}
-              <div className="lg:col-span-2 space-y-3">
+              <div className="lg:col-span-2 space-y-2">
                 {/* Bolt Specs */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                  <h2 className="text-sm font-semibold mb-3 text-cyan-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+                  <h2 className="text-xs font-semibold mb-2 text-cyan-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>Bolt
                   </h2>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Thread</label>
-                      <select value={boltStandard} onChange={handleBoltStandardChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white">
+                      <label className="block text-xs text-slate-400 mb-0.5">Thread</label>
+                      <select value={boltStandard} onChange={handleBoltStandardChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white">
                         {Object.keys(BOLT_STANDARDS).map(std => <option key={std} value={std}>{std}</option>)}
                       </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
-                        <label className="block text-xs text-slate-400 mb-1">d [mm]</label>
-                        <NumberInput value={d} onChange={setD} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                        <label className="block text-xs text-slate-400 mb-0.5">d [mm]</label>
+                        <NumberInput value={d} onChange={setD} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-400 mb-1">P [mm]</label>
-                        <NumberInput value={P} onChange={setP} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                        <label className="block text-xs text-slate-400 mb-0.5">P [mm]</label>
+                        <NumberInput value={P} onChange={setP} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">As [mm²] <span className="text-cyan-400">(calculated)</span></label>
-                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1.5 text-sm text-cyan-300 font-mono">
+                      <label className="block text-xs text-slate-400 mb-0.5">As [mm²] <span className="text-cyan-400">(calculated)</span></label>
+                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1 text-xs text-cyan-300 font-mono">
                         {As.toFixed(2)}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">L [mm] (effective length)</label>
-                      <NumberInput value={L} onChange={setL} step="1" min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <label className="block text-xs text-slate-400 mb-0.5">L [mm] (effective length)</label>
+                      <NumberInput value={L} onChange={setL} step="1" min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Kb [kN/mm] <span className="text-cyan-400">(E·As/L)</span></label>
-                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1.5 text-sm text-cyan-300 font-mono">
+                      <label className="block text-xs text-slate-400 mb-0.5">Kb [kN/mm] <span className="text-cyan-400">(E·As/L)</span></label>
+                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1 text-xs text-cyan-300 font-mono">
                         {Kb.toFixed(1)}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Number of Bolts</label>
-                      <NumberInput value={boltCount} onChange={(v) => setBoltCount(Math.max(1, v))} min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <label className="block text-xs text-slate-400 mb-0.5">Number of Bolts</label>
+                      <NumberInput value={boltCount} onChange={(v) => setBoltCount(Math.max(1, v))} min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Grade</label>
-                      <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white">
+                      <label className="block text-xs text-slate-400 mb-0.5">Grade</label>
+                      <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white">
                         {Object.keys(BOLT_MATERIALS).map(mat => <option key={mat} value={mat}>{mat}</option>)}
                       </select>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1">
                       <div>
-                        <label className="block text-xs text-slate-400 mb-1">σy [MPa]</label>
-                        <NumberInput value={sigmaY} onChange={setSigmaY} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                        <label className="block text-xs text-slate-400 mb-0.5">σy [MPa]</label>
+                        <NumberInput value={sigmaY} onChange={setSigmaY} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-400 mb-1">σb [MPa]</label>
-                        <NumberInput value={sigmaB} onChange={setSigmaB} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white disabled:opacity-50"/>
+                        <label className="block text-xs text-slate-400 mb-0.5">σb [MPa]</label>
+                        <NumberInput value={sigmaB} onChange={setSigmaB} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Preload [{preloadPercent}%] of σy</label>
+                      <label className="block text-xs text-slate-400 mb-0.5">Preload [{preloadPercent}%] of σy</label>
                       <input type="range" min="10" max="100" value={preloadPercent} onChange={(e) => setPreloadPercent(Number(e.target.value))} className="w-full accent-cyan-400"/>
                     </div>
                   </div>
                 </div>
 
                 {/* Stiffness Ratio */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-purple-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-purple-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-purple-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-purple-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-purple-400 rounded-full"></span>Stiffness Ratio
                   </h2>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">c = Kc/Kb</label>
-                      <NumberInput value={stiffnessRatio} onChange={setStiffnessRatio} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <label className="block text-xs text-slate-400 mb-0.5">c = Kc/Kb</label>
+                      <NumberInput value={stiffnessRatio} onChange={setStiffnessRatio} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
                       <input type="range" min="0.1" max="10" step="0.1" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} className="w-full mt-1 accent-purple-400"/>
                     </div>
                   </div>
                 </div>
 
                 {/* External Load */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-orange-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-orange-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-orange-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-orange-400 rounded-full"></span>External Load
                   </h2>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Total Force F [kN]</label>
-                      <NumberInput value={externalForce} onChange={setExternalForce} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm text-white"/>
+                      <label className="block text-xs text-slate-400 mb-0.5">Total Force F [kN]</label>
+                      <NumberInput value={externalForce} onChange={setExternalForce} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
                       <input type="range" min="0" max={Math.max(calc.looseningForce * boltCount * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-1 accent-orange-400"/>
                     </div>
                   </div>
@@ -351,104 +351,108 @@
               </div>
 
               {/* Right: Output Panel */}
-              <div className="lg:col-span-2 space-y-3">
+              <div className="lg:col-span-2 space-y-2">
                 {/* Stiffness Results */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-purple-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-purple-300">Stiffness</h2>
-                  <div className="space-y-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-purple-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-purple-300">Stiffness</h2>
+                  <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Ratio c</span>
-                      <span className="text-lg font-bold text-purple-400">{stiffnessRatio.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-purple-400">{stiffnessRatio.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Kc [kN/mm]</span>
-                      <span className="text-lg font-bold text-purple-400">{Kc.toFixed(1)}</span>
+                      <span className="text-sm font-bold text-purple-400">{Kc.toFixed(1)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Load Factor φ</span>
-                      <span className="text-lg font-bold text-green-400">{calc.phi.toFixed(4)}</span>
+                      <span className="text-sm font-bold text-green-400">{calc.phi.toFixed(4)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Force Results */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-cyan-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-cyan-300">Forces / bolt</h2>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Preload W₀</span>
-                      <span className="text-lg font-bold text-green-400">{calc.W0.toFixed(1)} kN</span>
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-cyan-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-cyan-300">Forces / bolt</h2>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-slate-400 shrink-0">Preload W₀</span>
+                      <span className="text-sm font-bold text-green-400">{calc.W0.toFixed(1)} kN</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Bolt Wb</span>
-                      <span className={`text-lg font-bold ${calc.yieldDanger ? 'text-yellow-400' : calc.breakageDanger ? 'text-red-400' : 'text-cyan-400'}`}>{calc.Wb.toFixed(2)} kN</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-slate-400 shrink-0">Axial Force Wb</span>
+                      <span className={`text-sm font-bold ${calc.yieldDanger ? 'text-yellow-400' : calc.breakageDanger ? 'text-red-400' : 'text-cyan-400'}`}>{calc.Wb.toFixed(2)} kN</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Clamp Wc</span>
-                      <span className={`text-lg font-bold ${calc.Wc <= 0 ? 'text-yellow-400' : 'text-purple-400'}`}>{calc.Wc.toFixed(2)} kN</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-slate-400 shrink-0">Clamp Force Wc</span>
+                      <span className={`text-sm font-bold ${calc.Wc <= 0 ? 'text-yellow-400' : 'text-purple-400'}`}>{calc.Wc.toFixed(2)} kN</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Yield</span>
-                      <span className="text-lg font-bold text-yellow-400">{calc.yieldLoad.toFixed(1)} kN</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-slate-400 shrink-0">Yield Capacity</span>
+                      <span className="text-sm font-bold text-yellow-400">{calc.yieldLoad.toFixed(1)} kN</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Breaking</span>
-                      <span className="text-lg font-bold" style={{color: materialColor}}>{calc.breakingLoad.toFixed(1)} kN</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs text-slate-400 shrink-0">Fracture Load</span>
+                      <span className="text-sm font-bold" style={{color: materialColor}}>{calc.breakingLoad.toFixed(1)} kN</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Delta Results */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-orange-700/50">
-                  <h2 className="text-sm font-semibold mb-3 text-orange-300">Changes / bolt</h2>
-                  <div className="space-y-2">
+                {/* Increments */}
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-orange-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-orange-300">Increments / bolt</h2>
+                  <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">ΔWb</span>
-                      <span className="text-lg font-bold text-cyan-400">{calc.deltaWb.toFixed(2)} kN</span>
+                      <span className="text-sm font-bold text-cyan-400">{calc.deltaWb.toFixed(2)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">ΔWc</span>
-                      <span className="text-lg font-bold text-purple-400">{calc.deltaWc.toFixed(2)} kN</span>
+                      <span className="text-sm font-bold text-purple-400">{calc.deltaWc.toFixed(2)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Δδ</span>
-                      <span className="text-lg font-bold text-orange-400">{calc.deltaDelta.toFixed(4)} mm</span>
+                      <span className="text-xs text-slate-400">Elongation Δδ</span>
+                      <span className="text-sm font-bold text-orange-400">{calc.deltaDelta.toFixed(4)} mm</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Critical Forces */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Critical Forces / bolt</h2>
-                  <div className="space-y-2">
+                {/* External Forces */}
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+                  <h2 className="text-xs font-semibold mb-2 text-slate-300">External Force / bolt</h2>
+                  <div className="space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">⚠️ Separation</span>
-                      <span className="text-lg font-bold text-orange-400">{calc.looseningForce.toFixed(1)} kN</span>
+                      <span className="text-xs text-slate-400">Current F / bolt</span>
+                      <span className="text-sm font-bold text-green-400">{forcePerBolt.toFixed(2)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">🟡 Yield</span>
-                      <span className="text-lg font-bold text-yellow-400">{calc.yieldForce.toFixed(1)} kN</span>
+                      <span className="text-xs text-slate-400">⚠️ Separation limit</span>
+                      <span className="text-sm font-bold text-orange-400">{calc.looseningForce.toFixed(1)} kN</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">🔴 Fracture</span>
-                      <span className="text-lg font-bold text-red-400">{calc.breakageForce.toFixed(1)} kN</span>
+                      <span className="text-xs text-slate-400">🟡 Yield limit</span>
+                      <span className="text-sm font-bold text-yellow-400">{calc.yieldForce.toFixed(1)} kN</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">🔴 Fracture limit</span>
+                      <span className="text-sm font-bold text-red-400">{calc.breakageForce.toFixed(1)} kN</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Factor of Safety */}
-                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                  <h2 className="text-sm font-semibold mb-3 text-slate-300">Factor of Safety</h2>
-                  <div className="space-y-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+                  <h2 className="text-xs font-semibold mb-2 text-slate-300">Factor of Safety</h2>
+                  <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">FoS (Yield)</span>
-                      <span className={`text-lg font-bold ${calc.fosYield >= 2 ? 'text-green-400' : calc.fosYield >= 1.5 ? 'text-yellow-400' : calc.fosYield >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
+                      <span className={`text-sm font-bold ${calc.fosYield >= 2 ? 'text-green-400' : calc.fosYield >= 1.5 ? 'text-yellow-400' : calc.fosYield >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
                         {calc.fosYield.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">FoS (Fracture)</span>
-                      <span className={`text-lg font-bold ${calc.fosFracture >= 2 ? 'text-green-400' : calc.fosFracture >= 1.5 ? 'text-yellow-400' : calc.fosFracture >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
+                      <span className={`text-sm font-bold ${calc.fosFracture >= 2 ? 'text-green-400' : calc.fosFracture >= 1.5 ? 'text-yellow-400' : calc.fosFracture >= 1 ? 'text-orange-400' : 'text-red-400'}`}>
                         {calc.fosFracture.toFixed(2)}
                       </span>
                     </div>
