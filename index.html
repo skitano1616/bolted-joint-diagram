@@ -210,61 +210,61 @@
               {/* Left: Input Panel */}
               <div className="lg:col-span-2 space-y-2">
                 {/* Bolt Specs */}
-                <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
-                  <h2 className="text-xs font-semibold mb-2 text-cyan-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-2 border border-slate-700">
+                  <h2 className="text-xs font-semibold mb-1.5 text-cyan-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>Bolt
                   </h2>
                   <div className="space-y-1">
                     <div>
                       <label className="block text-xs text-slate-400 mb-0.5">Thread</label>
-                      <select value={boltStandard} onChange={handleBoltStandardChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white">
+                      <select value={boltStandard} onChange={handleBoltStandardChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white">
                         {Object.keys(BOLT_STANDARDS).map(std => <option key={std} value={std}>{std}</option>)}
                       </select>
                     </div>
                     <div className="grid grid-cols-2 gap-1">
                       <div>
                         <label className="block text-xs text-slate-400 mb-0.5">d [mm]</label>
-                        <NumberInput value={d} onChange={setD} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
+                        <NumberInput value={d} onChange={setD} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white disabled:opacity-50"/>
                       </div>
                       <div>
                         <label className="block text-xs text-slate-400 mb-0.5">P [mm]</label>
-                        <NumberInput value={P} onChange={setP} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
+                        <NumberInput value={P} onChange={setP} disabled={boltStandard !== 'Custom'} step="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white disabled:opacity-50"/>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">As [mm²] <span className="text-cyan-400">(calculated)</span></label>
-                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1 text-xs text-cyan-300 font-mono">
-                        {As.toFixed(2)}
+                    <div className="grid grid-cols-2 gap-1">
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-0.5">As [mm²] <span className="text-cyan-400">calc.</span></label>
+                        <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-0.5 text-xs text-cyan-300 font-mono">{As.toFixed(2)}</div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">L [mm] (effective length)</label>
-                      <NumberInput value={L} onChange={setL} step="1" min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-0.5">L [mm] eff.</label>
+                        <NumberInput value={L} onChange={setL} step="1" min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs text-slate-400 mb-0.5">Kb [kN/mm] <span className="text-cyan-400">(E·As/L)</span></label>
-                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-1 text-xs text-cyan-300 font-mono">
-                        {Kb.toFixed(1)}
+                      <div className="w-full bg-slate-600/50 border border-slate-500 rounded px-2 py-0.5 text-xs text-cyan-300 font-mono">{Kb.toFixed(1)}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-0.5">Qty</label>
+                        <NumberInput value={boltCount} onChange={(v) => setBoltCount(Math.max(1, v))} min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">Number of Bolts</label>
-                      <NumberInput value={boltCount} onChange={(v) => setBoltCount(Math.max(1, v))} min="1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">Grade</label>
-                      <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white">
-                        {Object.keys(BOLT_MATERIALS).map(mat => <option key={mat} value={mat}>{mat}</option>)}
-                      </select>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-0.5">Grade</label>
+                        <select value={boltMaterial} onChange={handleBoltMaterialChange} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white">
+                          {Object.keys(BOLT_MATERIALS).map(mat => <option key={mat} value={mat}>{mat}</option>)}
+                        </select>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1">
                       <div>
                         <label className="block text-xs text-slate-400 mb-0.5">σy [MPa]</label>
-                        <NumberInput value={sigmaY} onChange={setSigmaY} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
+                        <NumberInput value={sigmaY} onChange={setSigmaY} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white disabled:opacity-50"/>
                       </div>
                       <div>
                         <label className="block text-xs text-slate-400 mb-0.5">σb [MPa]</label>
-                        <NumberInput value={sigmaB} onChange={setSigmaB} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white disabled:opacity-50"/>
+                        <NumberInput value={sigmaB} onChange={setSigmaB} disabled={boltMaterial !== 'Custom'} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white disabled:opacity-50"/>
                       </div>
                     </div>
                     <div>
@@ -275,52 +275,48 @@
                 </div>
 
                 {/* Tightening Torque */}
-                <div className="bg-slate-800/50 rounded-xl p-3 border border-teal-700/50">
-                  <h2 className="text-xs font-semibold mb-2 text-teal-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-2 border border-teal-700/50">
+                  <h2 className="text-xs font-semibold mb-1.5 text-teal-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-teal-400 rounded-full"></span>Tightening Torque
                   </h2>
                   <div className="space-y-1">
                     <div>
                       <label className="block text-xs text-slate-400 mb-0.5">K (nut factor)</label>
-                      <NumberInput value={nutFactor} onChange={setNutFactor} step="0.01" min="0.05" max="0.5" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
-                      <input type="range" min="0.05" max="0.5" step="0.01" value={nutFactor} onChange={(e) => setNutFactor(Number(e.target.value))} className="w-full mt-1 accent-teal-400"/>
+                      <NumberInput value={nutFactor} onChange={setNutFactor} step="0.01" min="0.05" max="0.5" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
+                      <input type="range" min="0.05" max="0.5" step="0.01" value={nutFactor} onChange={(e) => setNutFactor(Number(e.target.value))} className="w-full mt-0.5 accent-teal-400"/>
                     </div>
-                    <div className="flex justify-between items-center pt-1">
+                    <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">T = K·W₀·d</span>
                       <span className="text-sm font-bold text-teal-300 font-mono">{(nutFactor * calc.W0 * d).toFixed(1)} N·m</span>
                     </div>
                     <div>
                       <label className="block text-xs text-slate-400 mb-0.5">Preload scatter [±%]</label>
-                      <NumberInput value={scatterPercent} onChange={(v) => setScatterPercent(Math.max(0, Math.min(50, v)))} step="1" min="0" max="50" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
+                      <NumberInput value={scatterPercent} onChange={(v) => setScatterPercent(Math.max(0, Math.min(50, v)))} step="1" min="0" max="50" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
                     </div>
                   </div>
                 </div>
 
                 {/* Stiffness Ratio */}
-                <div className="bg-slate-800/50 rounded-xl p-3 border border-purple-700/50">
-                  <h2 className="text-xs font-semibold mb-2 text-purple-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-2 border border-purple-700/50">
+                  <h2 className="text-xs font-semibold mb-1.5 text-purple-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-purple-400 rounded-full"></span>Stiffness Ratio
                   </h2>
-                  <div className="space-y-1">
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">c = Kc/Kb</label>
-                      <NumberInput value={stiffnessRatio} onChange={setStiffnessRatio} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
-                      <input type="range" min="0.1" max="10" step="0.1" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} className="w-full mt-1 accent-purple-400"/>
-                    </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-0.5">c = Kc/Kb</label>
+                    <NumberInput value={stiffnessRatio} onChange={setStiffnessRatio} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
+                    <input type="range" min="0.1" max="10" step="0.1" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} className="w-full mt-0.5 accent-purple-400"/>
                   </div>
                 </div>
 
                 {/* External Load */}
-                <div className="bg-slate-800/50 rounded-xl p-3 border border-orange-700/50">
-                  <h2 className="text-xs font-semibold mb-2 text-orange-300 flex items-center gap-2">
+                <div className="bg-slate-800/50 rounded-xl p-2 border border-orange-700/50">
+                  <h2 className="text-xs font-semibold mb-1.5 text-orange-300 flex items-center gap-2">
                     <span className="w-2 h-2 bg-orange-400 rounded-full"></span>External Load
                   </h2>
-                  <div className="space-y-1">
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-0.5">Total Force F [kN]</label>
-                      <NumberInput value={externalForce} onChange={setExternalForce} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
-                      <input type="range" min="0" max={Math.max(calc.looseningForce * boltCount * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-1 accent-orange-400"/>
-                    </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-0.5">Total Force F [kN]</label>
+                    <NumberInput value={externalForce} onChange={setExternalForce} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
+                    <input type="range" min="0" max={Math.max(calc.looseningForce * boltCount * 1.3, 100)} step="0.5" value={externalForce} onChange={(e) => setExternalForce(Number(e.target.value))} className="w-full mt-0.5 accent-orange-400"/>
                   </div>
                 </div>
               </div>
