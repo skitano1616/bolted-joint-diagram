@@ -103,6 +103,8 @@
       const [stiffnessRatio, setStiffnessRatio] = useState(() => Number(_up.get('c')) || 0.4);
       const [preloadPercent, setPreloadPercent] = useState(() => Number(_up.get('preload')) || 70);
       const [externalForce, setExternalForce] = useState(() => Number(_up.get('F')) || 0);
+      const [nutFactor, setNutFactor] = useState(() => Number(_up.get('K')) || 0.2);
+      const [scatterPercent, setScatterPercent] = useState(() => Number(_up.get('scatter')) || 0);
       const [copied, setCopied] = useState(false);
 
       const As = useMemo(() => calculateAs(d, P), [d, P]);
@@ -120,9 +122,11 @@
         params.set('c', stiffnessRatio);
         params.set('preload', preloadPercent);
         if (externalForce) params.set('F', externalForce);
+        params.set('K', nutFactor);
+        if (scatterPercent) params.set('scatter', scatterPercent);
         if (boltMaterial === 'Custom') { params.set('sigmaY', sigmaY); params.set('sigmaB', sigmaB); }
         history.replaceState(null, '', '?' + params.toString());
-      }, [boltStandard, boltMaterial, d, P, L, boltCount, stiffnessRatio, preloadPercent, externalForce, sigmaY, sigmaB]);
+      }, [boltStandard, boltMaterial, d, P, L, boltCount, stiffnessRatio, preloadPercent, externalForce, nutFactor, scatterPercent, sigmaY, sigmaB]);
 
       const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -185,6 +189,10 @@
       const newX = toSvgX(calc.deltaDelta);
       const WbY = toSvgY(calc.Wb);
       const WcY = toSvgY(Math.max(0, calc.Wc));
+
+      // Scatter lines
+      const W0min = calc.W0 * (1 - scatterPercent / 100);
+      const W0max = calc.W0 * (1 + scatterPercent / 100);
 
       const materialColor = BOLT_MATERIALS[boltMaterial]?.color || '#64748b';
 
@@ -266,6 +274,28 @@
                   </div>
                 </div>
 
+                {/* Tightening Torque */}
+                <div className="bg-slate-800/50 rounded-xl p-3 border border-teal-700/50">
+                  <h2 className="text-xs font-semibold mb-2 text-teal-300 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-teal-400 rounded-full"></span>Tightening Torque
+                  </h2>
+                  <div className="space-y-1">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-0.5">K (nut factor)</label>
+                      <NumberInput value={nutFactor} onChange={setNutFactor} step="0.01" min="0.05" max="0.5" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
+                      <input type="range" min="0.05" max="0.5" step="0.01" value={nutFactor} onChange={(e) => setNutFactor(Number(e.target.value))} className="w-full mt-1 accent-teal-400"/>
+                    </div>
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-xs text-slate-400">T = K·W₀·d</span>
+                      <span className="text-sm font-bold text-teal-300 font-mono">{(nutFactor * calc.W0 * d).toFixed(1)} N·m</span>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-0.5">Preload scatter [±%]</label>
+                      <NumberInput value={scatterPercent} onChange={(v) => setScatterPercent(Math.max(0, Math.min(50, v)))} step="1" min="0" max="50" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-white"/>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Stiffness Ratio */}
                 <div className="bg-slate-800/50 rounded-xl p-3 border border-purple-700/50">
                   <h2 className="text-xs font-semibold mb-2 text-purple-300 flex items-center gap-2">
@@ -321,6 +351,20 @@
                     {/* Breaking line */}
                     <line x1={margin.left} y1={toSvgY(calc.breakingLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.breakingLoad)} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3"/>
                     <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 8} fill="#ef4444" fontSize="16" fontWeight="bold" textAnchor="end">Fracture: {calc.breakingLoad.toFixed(1)}kN</text>
+
+                    {/* Preload scatter band */}
+                    {scatterPercent > 0 && (
+                      <>
+                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(-W0min / Kb)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
+                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(W0min / Kc)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
+                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(-W0max / Kb)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
+                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(W0max / Kc)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
+                        <circle cx={apexX} cy={toSvgY(W0min)} r="4" fill="#f59e0b" opacity="0.7"/>
+                        <text x={apexX + 8} y={toSvgY(W0min) + 4} fill="#f59e0b" fontSize="10" opacity="0.9">−{scatterPercent}% ({W0min.toFixed(1)}kN)</text>
+                        <circle cx={apexX} cy={toSvgY(W0max)} r="4" fill="#f59e0b" opacity="0.7"/>
+                        <text x={apexX + 8} y={toSvgY(W0max) - 4} fill="#f59e0b" fontSize="10" opacity="0.9">+{scatterPercent}% ({W0max.toFixed(1)}kN)</text>
+                      </>
+                    )}
 
                     <line x1={apexX} y1={apexY} x2={boltZeroX} y2={zeroY} stroke="#22d3ee" strokeWidth="3"/>
                     <line x1={apexX} y1={apexY} x2={toSvgX(calc.deltaBolt0 * 0.5)} y2={toSvgY(calc.W0 + Kb * calc.deltaBolt0 * 0.5)} stroke="#22d3ee" strokeWidth="2" strokeDasharray="5,3" opacity="0.6"/>
