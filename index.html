@@ -352,18 +352,36 @@
                     <text x={svgWidth - margin.right - 5} y={toSvgY(calc.breakingLoad) - 8} fill="#ef4444" fontSize="16" fontWeight="bold" textAnchor="end">Fracture: {calc.breakingLoad.toFixed(1)}kN</text>
 
                     {/* Preload scatter band */}
-                    {scatterPercent > 0 && (
-                      <>
-                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(-W0min / Kb)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
-                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(W0min / Kc)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
-                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(-W0max / Kb)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
-                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(W0max / Kc)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.7"/>
-                        <circle cx={apexX} cy={toSvgY(W0min)} r="4" fill="#f59e0b" opacity="0.7"/>
-                        <text x={apexX + 8} y={toSvgY(W0min) + 4} fill="#f59e0b" fontSize="10" opacity="0.9">−{scatterPercent}% ({W0min.toFixed(1)}kN)</text>
-                        <circle cx={apexX} cy={toSvgY(W0max)} r="4" fill="#f59e0b" opacity="0.7"/>
-                        <text x={apexX + 8} y={toSvgY(W0max) - 4} fill="#f59e0b" fontSize="10" opacity="0.9">+{scatterPercent}% ({W0max.toFixed(1)}kN)</text>
-                      </>
-                    )}
+                    {scatterPercent > 0 && (() => {
+                      const Wb_min = W0min + forcePerBolt * calc.phi;
+                      const Wc_min = W0min - forcePerBolt * (1 - calc.phi);
+                      const Wb_max = W0max + forcePerBolt * calc.phi;
+                      const Wc_max = W0max - forcePerBolt * (1 - calc.phi);
+                      return <>
+                        {/* W0min scatter case */}
+                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(-W0min / Kb)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.6"/>
+                        <line x1={apexX} y1={toSvgY(W0min)} x2={toSvgX(W0min / Kc)} y2={zeroY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.6"/>
+                        <circle cx={apexX} cy={toSvgY(W0min)} r="3" fill="#f59e0b" opacity="0.8"/>
+                        <text x={apexX + 6} y={toSvgY(W0min) + 4} fill="#f59e0b" fontSize="10" opacity="0.9">−{scatterPercent}% W₀={W0min.toFixed(1)}kN</text>
+                        {forcePerBolt > 0 && <>
+                          <circle cx={newX} cy={toSvgY(Wb_min)} r="4" fill="#f59e0b" stroke="#fff" strokeWidth="1" opacity="0.8"/>
+                          <text x={newX - 6} y={toSvgY(Wb_min) - 6} fill="#f59e0b" fontSize="9" textAnchor="middle" opacity="0.9">Wb={Wb_min.toFixed(1)}</text>
+                          {Wc_min > 0 && <><circle cx={newX} cy={toSvgY(Wc_min)} r="4" fill="#f59e0b" stroke="#fff" strokeWidth="1" opacity="0.8"/>
+                          <text x={newX - 6} y={toSvgY(Wc_min) + 14} fill="#f59e0b" fontSize="9" textAnchor="middle" opacity="0.9">Wc={Wc_min.toFixed(1)}</text></>}
+                        </>}
+                        {/* W0max scatter case */}
+                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(-W0max / Kb)} y2={zeroY} stroke="#fcd34d" strokeWidth="1.5" opacity="0.6"/>
+                        <line x1={apexX} y1={toSvgY(W0max)} x2={toSvgX(W0max / Kc)} y2={zeroY} stroke="#fcd34d" strokeWidth="1.5" opacity="0.6"/>
+                        <circle cx={apexX} cy={toSvgY(W0max)} r="3" fill="#fcd34d" opacity="0.8"/>
+                        <text x={apexX + 6} y={toSvgY(W0max) - 4} fill="#fcd34d" fontSize="10" opacity="0.9">+{scatterPercent}% W₀={W0max.toFixed(1)}kN</text>
+                        {forcePerBolt > 0 && <>
+                          <circle cx={newX} cy={toSvgY(Wb_max)} r="4" fill="#fcd34d" stroke="#fff" strokeWidth="1" opacity="0.8"/>
+                          <text x={newX + 14} y={toSvgY(Wb_max) - 6} fill="#fcd34d" fontSize="9" textAnchor="middle" opacity="0.9">Wb={Wb_max.toFixed(1)}</text>
+                          {Wc_max > 0 && <><circle cx={newX} cy={toSvgY(Wc_max)} r="4" fill="#fcd34d" stroke="#fff" strokeWidth="1" opacity="0.8"/>
+                          <text x={newX + 14} y={toSvgY(Wc_max) + 14} fill="#fcd34d" fontSize="9" textAnchor="middle" opacity="0.9">Wc={Wc_max.toFixed(1)}</text></>}
+                        </>}
+                      </>;
+                    })()}
 
                     <line x1={apexX} y1={apexY} x2={boltZeroX} y2={zeroY} stroke="#22d3ee" strokeWidth="3"/>
                     {(() => { let a = Math.atan2(zeroY - apexY, boltZeroX - apexX) * 180 / Math.PI; if (a > 90) a -= 180; if (a < -90) a += 180; return <text transform={`translate(${(apexX + boltZeroX) / 2}, ${(apexY + zeroY) / 2}) rotate(${a})`} fill="#22d3ee" fontSize="11" textAnchor="middle" dy="-7" opacity="0.9">Bolt</text>; })()}
