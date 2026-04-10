@@ -83,24 +83,52 @@
       const BOLT_MATERIALS = processMaterialSpecs(materialsConfig.materials);
       const BOLT_STANDARDS = processThreadSpecs(threadsConfig.threads);
 
-      const defaultMaterial = Object.keys(materialsConfig.materials)[2] || '12.9';
-      const defaultThread = 'M10';
+      // Read URL params for initial state
+      const _up = new URLSearchParams(window.location.search);
+      const _urlThread = _up.get('thread');
+      const _urlMaterial = _up.get('material');
+      const fallbackMaterial = Object.keys(materialsConfig.materials)[2] || '12.9';
+      const fallbackThread = 'M10';
+      const initThread = (_urlThread && BOLT_STANDARDS[_urlThread]) ? _urlThread : fallbackThread;
+      const initMaterial = (_urlMaterial && BOLT_MATERIALS[_urlMaterial]) ? _urlMaterial : fallbackMaterial;
 
-      const [boltStandard, setBoltStandard] = useState(defaultThread);
-      const [boltMaterial, setBoltMaterial] = useState(defaultMaterial);
-      const [sigmaY, setSigmaY] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaY || 1080);
-      const [sigmaB, setSigmaB] = useState(BOLT_MATERIALS[defaultMaterial]?.sigmaB || 1200);
-      const [d, setD] = useState(BOLT_STANDARDS[defaultThread]?.D || 10);
-      const [P, setP] = useState(BOLT_STANDARDS[defaultThread]?.P || 1.5);
-      const [L, setL] = useState(BOLT_STANDARDS[defaultThread]?.D || 10);
-      const [boltCount, setBoltCount] = useState(1);
-      const [stiffnessRatio, setStiffnessRatio] = useState(0.4);
-      const [preloadPercent, setPreloadPercent] = useState(70);
-      const [externalForce, setExternalForce] = useState(0);
+      const [boltStandard, setBoltStandard] = useState(initThread);
+      const [boltMaterial, setBoltMaterial] = useState(initMaterial);
+      const [sigmaY, setSigmaY] = useState(() => Number(_up.get('sigmaY')) || BOLT_MATERIALS[initMaterial]?.sigmaY || 1080);
+      const [sigmaB, setSigmaB] = useState(() => Number(_up.get('sigmaB')) || BOLT_MATERIALS[initMaterial]?.sigmaB || 1200);
+      const [d, setD] = useState(() => Number(_up.get('d')) || BOLT_STANDARDS[initThread]?.D || 10);
+      const [P, setP] = useState(() => Number(_up.get('P')) || BOLT_STANDARDS[initThread]?.P || 1.5);
+      const [L, setL] = useState(() => Number(_up.get('L')) || BOLT_STANDARDS[initThread]?.D || 10);
+      const [boltCount, setBoltCount] = useState(() => Number(_up.get('n')) || 1);
+      const [stiffnessRatio, setStiffnessRatio] = useState(() => Number(_up.get('c')) || 0.4);
+      const [preloadPercent, setPreloadPercent] = useState(() => Number(_up.get('preload')) || 70);
+      const [externalForce, setExternalForce] = useState(() => Number(_up.get('F')) || 0);
+      const [copied, setCopied] = useState(false);
 
       const As = useMemo(() => calculateAs(d, P), [d, P]);
       const E = 210; // Young's modulus for steel [GPa] = [kN/mm²]
       const Kb = useMemo(() => L > 0 ? (E * As) / L : 200, [As, L]);
+
+      // Sync state to URL
+      useEffect(() => {
+        const params = new URLSearchParams();
+        params.set('thread', boltStandard);
+        params.set('material', boltMaterial);
+        if (boltStandard === 'Custom') { params.set('d', d); params.set('P', P); }
+        params.set('L', L);
+        params.set('n', boltCount);
+        params.set('c', stiffnessRatio);
+        params.set('preload', preloadPercent);
+        if (externalForce) params.set('F', externalForce);
+        if (boltMaterial === 'Custom') { params.set('sigmaY', sigmaY); params.set('sigmaB', sigmaB); }
+        history.replaceState(null, '', '?' + params.toString());
+      }, [boltStandard, boltMaterial, d, P, L, boltCount, stiffnessRatio, preloadPercent, externalForce, sigmaY, sigmaB]);
+
+      const handleCopyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
 
       const handleBoltStandardChange = (e) => {
         const standard = e.target.value;
@@ -163,7 +191,12 @@
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold mb-3 text-cyan-400">Bolted Joint Diagram</h1>
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="text-2xl font-bold text-cyan-400">Bolted Joint Diagram</h1>
+              <button onClick={handleCopyLink} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-700 hover:bg-slate-600 border border-slate-600 transition-colors">
+                {copied ? <span className="text-green-400">✓ Copied!</span> : <span className="text-slate-300">🔗 Share</span>}
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left: Input Panel */}
