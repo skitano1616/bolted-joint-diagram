@@ -339,10 +339,13 @@
                     <line x1={margin.left} y1={zeroY} x2={svgWidth - margin.right} y2={zeroY} stroke="#64748b" strokeWidth="1.5"/>
                     <line x1={centerX} y1={margin.top - 10} x2={centerX} y2={zeroY} stroke="#64748b" strokeWidth="1.5"/>
 
-                    <text x={svgWidth - margin.right + 5} y={zeroY + 15} fill="#94a3b8" fontSize="12">δ</text>
-                    <text x={centerX + 8} y={margin.top - 12} fill="#94a3b8" fontSize="12">W</text>
-                    <text x={margin.left + 15} y={zeroY + 15} fill="#22d3ee" fontSize="11">← Bolt</text>
-                    <text x={svgWidth - margin.right - 55} y={zeroY + 15} fill="#a855f7" fontSize="11">Clamped →</text>
+                    {/* Y-axis label: rotated along left side */}
+                    <text transform={`translate(13, ${(margin.top + zeroY) / 2}) rotate(-90)`} fill="#94a3b8" fontSize="12" textAnchor="middle">Axial Force W [kN]</text>
+                    {/* X-axis label: centered below axis */}
+                    <text x={svgWidth / 2} y={svgHeight - 5} fill="#94a3b8" fontSize="12" textAnchor="middle">Deformation δ [mm]</text>
+                    {/* Axis direction labels */}
+                    <text x={margin.left + 15} y={zeroY + 15} fill="#22d3ee" fontSize="11">← Bolt elongation</text>
+                    <text x={svgWidth - margin.right - 85} y={zeroY + 15} fill="#a855f7" fontSize="11">compression →</text>
 
                     {/* Yield line */}
                     <line x1={margin.left} y1={toSvgY(calc.yieldLoad)} x2={svgWidth - margin.right} y2={toSvgY(calc.yieldLoad)} stroke="#facc15" strokeWidth="2" strokeDasharray="4,2"/>
