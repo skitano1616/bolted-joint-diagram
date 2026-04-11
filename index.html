@@ -100,7 +100,7 @@
       const [P, setP] = useState(() => Number(_up.get('P')) || BOLT_STANDARDS[initThread]?.P || 1.5);
       const [L, setL] = useState(() => Number(_up.get('L')) || BOLT_STANDARDS[initThread]?.D || 10);
       const [boltCount, setBoltCount] = useState(() => Number(_up.get('n')) || 1);
-      const [stiffnessRatio, setStiffnessRatio] = useState(() => Number(_up.get('c')) || 0.4);
+      const [loadFactor, setLoadFactor] = useState(() => Number(_up.get('phi')) || 0.7);
       const [preloadPercent, setPreloadPercent] = useState(() => Number(_up.get('preload')) || 70);
       const [externalForce, setExternalForce] = useState(() => Number(_up.get('F')) || 0);
       const [nutFactor, setNutFactor] = useState(() => Number(_up.get('K')) || 0.2);
@@ -119,14 +119,14 @@
         if (boltStandard === 'Custom') { params.set('d', d); params.set('P', P); }
         params.set('L', L);
         params.set('n', boltCount);
-        params.set('c', stiffnessRatio);
+        params.set('phi', loadFactor);
         params.set('preload', preloadPercent);
         if (externalForce) params.set('F', externalForce);
         params.set('K', nutFactor);
         if (scatterPercent) params.set('scatter', scatterPercent);
         if (boltMaterial === 'Custom') { params.set('sigmaY', sigmaY); params.set('sigmaB', sigmaB); }
         history.replaceState(null, '', '?' + params.toString());
-      }, [boltStandard, boltMaterial, d, P, L, boltCount, stiffnessRatio, preloadPercent, externalForce, nutFactor, scatterPercent, sigmaY, sigmaB]);
+      }, [boltStandard, boltMaterial, d, P, L, boltCount, loadFactor, preloadPercent, externalForce, nutFactor, scatterPercent, sigmaY, sigmaB]);
 
       const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -151,7 +151,7 @@
         if (BOLT_MATERIALS[material]?.sigmaB !== null) setSigmaB(BOLT_MATERIALS[material].sigmaB);
       };
 
-      const Kc = Kb * stiffnessRatio;
+      const Kc = loadFactor > 0 && loadFactor < 1 ? Kb * (1 - loadFactor) / loadFactor : Kb;
       const forcePerBolt = boltCount > 0 ? externalForce / boltCount : 0;
 
       const calc = useMemo(() => {
@@ -296,15 +296,15 @@
                   </div>
                 </div>
 
-                {/* Stiffness Ratio */}
+                {/* Load Factor */}
                 <div className="bg-slate-800/50 rounded-xl p-2 border border-purple-700/50">
                   <h2 className="text-xs font-semibold mb-1.5 text-purple-300 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-purple-400 rounded-full"></span>Stiffness Ratio
+                    <span className="w-2 h-2 bg-purple-400 rounded-full"></span>Load Factor
                   </h2>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-0.5">c = Kc/Kb</label>
-                    <NumberInput value={stiffnessRatio} onChange={setStiffnessRatio} step="0.1" min="0.1" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
-                    <input type="range" min="0.1" max="10" step="0.1" value={stiffnessRatio} onChange={(e) => setStiffnessRatio(Number(e.target.value))} className="w-full mt-0.5 accent-purple-400"/>
+                    <label className="block text-xs text-slate-400 mb-0.5">φ = Kb/(Kb+Kc)</label>
+                    <NumberInput value={loadFactor} onChange={(v) => setLoadFactor(Math.min(0.99, Math.max(0.01, v)))} step="0.01" min="0.01" max="0.99" className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-0.5 text-xs text-white"/>
+                    <input type="range" min="0.01" max="0.99" step="0.01" value={loadFactor} onChange={(e) => setLoadFactor(Number(e.target.value))} className="w-full mt-0.5 accent-purple-400"/>
                   </div>
                 </div>
 
@@ -436,16 +436,12 @@
                   <h2 className="text-xs font-semibold mb-2 text-purple-300">Stiffness</h2>
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Ratio c</span>
-                      <span className="text-sm font-bold text-purple-400">{stiffnessRatio.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-400">Kc [kN/mm]</span>
                       <span className="text-sm font-bold text-purple-400">{Kc.toFixed(1)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Load Factor φ</span>
-                      <span className="text-sm font-bold text-green-400">{calc.phi.toFixed(4)}</span>
+                      <span className="text-xs text-slate-400">Ratio c = Kc/Kb</span>
+                      <span className="text-sm font-bold text-purple-400">{(Kc / Kb).toFixed(3)}</span>
                     </div>
                   </div>
                 </div>
@@ -541,7 +537,7 @@
             </div>
 
             <div className="mt-3 text-center text-slate-600 text-xs">
-              As = 0.7854×(d-0.9382P)² | c = Kc/Kb | φ = 1/(1+c) | ΔWb = F×φ | ΔWc = F×(1-φ)
+              As = 0.7854×(d-0.9382P)² | Kc = Kb×(1-φ)/φ | ΔWb = F×φ | ΔWc = F×(1-φ)
             </div>
           </div>
         </div>
